@@ -19,7 +19,7 @@ Before diving into pruning rules, here are essential concepts from GHOSTDAG/PHAN
 
 **The DAG:** Blocks form a directed acyclic graph — each block has parent pointers to one or more existing **tips** (blocks with no children yet, representing the frontier of the DAG). Following parent pointers backward always leads to Genesis (the first block) and never creates cycles.
 
-**Weight:** Each block has weight = 1 + sum of weights of all its **blue ancestors**. Only blue blocks contribute to weight calculations; red blocks are ignored for this purpose. This measures how much "work" backs the block through valid consensus paths.
+**Score (w):** The score of a block B, denoted w(B), equals the number of blue blocks in B.Past. Score measures **depth** in the DAG — counting all blue blocks from B back to Genesis (inclusive).
 
 **Past/Future/Chain:**
 - **B.Past** = all ancestors of B (blocks reachable by following parent pointers backward)
@@ -59,9 +59,9 @@ Some notations:
 
 For any integer n and any block B let:
 
-**B_n** = the element C in B.Chain that maximizes weight(C) subject to weight(C) < weight(B) - n
+**B_n** = the element C in B.Chain that maximizes score(C) subject to score(C) < score(B) - n
 
-*Equivalently: walk backward from B along its canonical chain, and stop at the first block whose weight drops below weight(B) minus n.*
+*Equivalently: walk backward from B along its canonical chain, and stop at the first block whose score drops below score(B) minus n.*
 
 We name some useful blocks:
 - The block at *depth* n is **Virtual_n**
@@ -74,11 +74,11 @@ We name some useful blocks:
 
 For any integer n and any block B:
 
-weight(B) - n - k - 1 ≤ weight(B_n) < weight(B) - n
+score(B) - n - k - 1 ≤ score(B_n) < score(B) - n
 
-*Interpreted as distance: B_n is at least n weight units back from B, but no more than n + k + 1 weight units back. The "uncertainty window" of at most k+1 comes from the fact that each step along the canonical chain can add at most k+1 blue blocks.*
+*Interpreted as distance: B_n is at least n score units back from B, but no more than n + k + 1 score units back. The "uncertainty window" of at most k+1 comes from the fact that each step along the canonical chain can add at most k+1 blue blocks.*
 
-*Proof:* The second inequality follows directly from Definition of blue depth. The first follows from maximality of B_n. Assume weight(B_n) < weight(B) - n - k - 1. Since each chain block can add at most k+1 blue blocks, there must exist a block C in B.Chain where C.SelectedParent = B_n, and which satisfies weight(C) < weight(B) - n. Contradicting maximality of B_n.
+*Proof:* The second inequality follows directly from Definition of blue depth. The first follows from maximality of B_n. Assume score(B_n) < score(B) - n - k - 1. Since each chain block can add at most k+1 blue blocks, there must exist a block C in B.Chain where C.SelectedParent = B_n, and which satisfies score(C) < score(B) - n. Contradicting maximality of B_n.
 
 ═══════════════════
 
@@ -86,11 +86,11 @@ weight(B) - n - k - 1 ≤ weight(B_n) < weight(B) - n
 
 For any block B and any integers m, n such that m > n:
 
-weight(B_m) < weight(B_n) + n + k + 1 - m
+score(B_m) < score(B_n) + n + k + 1 - m
 
 *Equivalently: B_m is always further back than B_n: by at least how much deeper you went (m-n), and at most that amount plus k+1.*
 
-*Proof:* This is a direct result of applying the Depth Bounds corollary over B, m and obtaining weight(B_m) < weight(B) - m, applying the same corollary over B, n and obtaining weight(B) - n - k - 1 ≤ weight(B_n), and combining the inequalities.
+*Proof:* This is a direct result of applying the Depth Bounds corollary over B, m and obtaining score(B_m) < score(B) - m, applying the same corollary over B, n and obtaining score(B) - n - k - 1 ≤ score(B_n), and combining the inequalities.
 
 ═══════════════════
 
@@ -156,7 +156,7 @@ Such a block must exist by the induction hypothesis.
 
 **Counting Measures:** We now define two quantities to track progress:
 
-**wᵢ (freeloader distance):** How far Bⁱ sits from Xⁱ⁻¹'s main chain — specifically, the weight difference between Xⁱ⁻¹ and the heaviest block that is both on Xⁱ⁻¹'s canonical chain AND an ancestor of Bⁱ.
+**wᵢ (freeloader distance):** How far Bⁱ sits from Xⁱ⁻¹'s main chain — specifically, the score difference between Xⁱ⁻¹ and the heaviest block that is both on Xⁱ⁻¹'s canonical chain AND an ancestor of Bⁱ.
 
 *(Intuition: wᵢ = 0 means Bⁱ IS on Xⁱ⁻¹'s main chain; larger values mean Bⁱ branches further off to a side fork.)*
 
@@ -172,7 +172,7 @@ Note: w₀ and δ₀ are undefined, and δᵢ = 0 exactly when Bⁱ equals Xⁱ.
 
 For all i = 1, 2, ..., m: **wᵢ ≤ 4k + 1**
 
-*(Intuition: Blue blocks can't be arbitrarily far off the main chain. The GHOSTDAG/PHANTOM selection rules ensure any blue block is within 4k+1 weight units of the canonical chain — this loose bound is a fundamental security property of the protocol.)*
+*(Intuition: Blue blocks can't be arbitrarily far off the main chain. The GHOSTDAG/PHANTOM selection rules ensure any blue block is within 4k+1 score units of the canonical chain — this loose bound is a fundamental security property of the protocol.)*
 
 *Proof:* This follows from the fact that Bⁱ is blue and from an argument similar to GHOSTDAG's freeloader bound (Bⁱ being a block freeloaded by Xⁱ⁻¹).
 
@@ -196,21 +196,21 @@ Since |Δᵢ| = δᵢ + 1, summing over all i gives the desired result.
 
 **Claim 3 (Score Distance):**
 
-**weight(Xᵐ) > weight(F) - 4×ℓ×k**
+**score(Xᵐ) > score(F) - 4×ℓ×k**
 
-*(Intuition: Each step of the process can only move us back a limited amount — at most wᵢ + δᵢ(k+1). Summing over all steps using Claims 1 and 2, the total "drift" backward is bounded by 4×ℓ×k. This means Xᵐ cannot be arbitrarily far from F in weight terms — it stays within a predictable window.)*
+*(Intuition: Each step of the process can only move us back a limited amount — at most wᵢ + δᵢ(k+1). Summing over all steps using Claims 1 and 2, the total "drift" backward is bounded by 4×ℓ×k. This means Xᵐ cannot be arbitrarily far from F in score terms — it stays within a predictable window.)*
 
-*Proof:* By definition of wᵢ we have that **weight(Xⁱ⁻¹) - wᵢ < weight(Bⁱ)**. Additionally, since Xⁱ is in Bⁱ's InclusiveChain and each chain block can add at most k+1 blue blocks, we get that **weight(Bⁱ) ≤ weight(Xⁱ) + δᵢ × (k+1)**.
+*Proof:* By definition of wᵢ we have that **score(Xⁱ⁻¹) - wᵢ < score(Bⁱ)**. Additionally, since Xⁱ is in Bⁱ's InclusiveChain and each chain block can add at most k+1 blue blocks, we get that **score(Bⁱ) ≤ score(Xⁱ) + δᵢ × (k+1)**.
 
 Reorganizing terms gives us a bound on the score distance between two consecutive merging blocks:
 
-**weight(Xⁱ⁻¹) - weight(Xⁱ) < wᵢ + δᵢ × (k+1)**
+**score(Xⁱ⁻¹) - score(Xⁱ) < wᵢ + δᵢ × (k+1)**
 
 Summing this inequality over i = 1, 2, ..., m and using Claims (Freeloader Distance) and (Mergeset Limit), we get:
 
-**weight(X⁰) - weight(Xᵐ) < m × 4k + δ₁(k+1) + ... + δₘ(k+1) ≤ 4×ℓ×k**
+**score(X⁰) - score(Xᵐ) < m × 4k + δ₁(k+1) + ... + δₘ(k+1) ≤ 4×ℓ×k**
 
-where the last inequality holds since k > 0. The desired result follows because F is in X⁰.Past, so weight(F) < weight(X⁰).
+where the last inequality holds since k > 0. The desired result follows because F is in X⁰.Past, so score(F) < score(X⁰).
 
 ***
 
@@ -222,21 +222,21 @@ For all i = 0, 1, ..., m: **P is in Xⁱ_Finality.Chain**
 
 *Proof:* By induction on i.
 
-**Basis:** For i = 0 (where X = X⁰), the claim follows immediately since P and X⁰_Finality are both in X.Chain and weight(X⁰_Finality) > weight(P).
+**Basis:** For i = 0 (where X = X⁰), the claim follows immediately since P and X⁰_Finality are both in X.Chain and score(X⁰_Finality) > score(P).
 
 **Inductive step:** Assume that P is in Xⁱ⁻¹_Finality.Chain. We will now show that P is in Xⁱ_Finality.Chain.
 
-By definition of Bⁱ we have that Xⁱ⁻¹_Finality is in Bⁱ.Chain. The selection process also implies that Xⁱ_Finality and Xⁱ are both in Bⁱ.Chain. Combining with the induction hypothesis, P and Xⁱ_Finality are both in Bⁱ.Chain. Since both blocks share a chain, it remains to show that **weight(P) < weight(Xⁱ_Finality)**.
+By definition of Bⁱ we have that Xⁱ⁻¹_Finality is in Bⁱ.Chain. The selection process also implies that Xⁱ_Finality and Xⁱ are both in Bⁱ.Chain. Combining with the induction hypothesis, P and Xⁱ_Finality are both in Bⁱ.Chain. Since both blocks share a chain, it remains to show that **score(P) < score(Xⁱ_Finality)**.
 
-Following Claim (Score Distance) and noting that Xᵐ is in Xⁱ.Past, we get that **weight(Xⁱ) > weight(F) - 4×ℓ×k**. Combining with Corollary (Depth Bounds) over Xⁱ and φ, we have:
+Following Claim (Score Distance) and noting that Xᵐ is in Xⁱ.Past, we get that **score(Xⁱ) > score(F) - 4×ℓ×k**. Combining with Corollary (Depth Bounds) over Xⁱ and φ, we have:
 
-**weight(Xⁱ_Finality) > weight(F) - 4×ℓ×k - φ - k - 1**
+**score(Xⁱ_Finality) > score(F) - 4×ℓ×k - φ - k - 1**
 
 On the other hand, by plugging Virtual, π, and φ into Corollary (Depth Relation), we get that:
 
-**weight(P) < weight(F) - 4×ℓ×k - φ - k - 1**
+**score(P) < score(F) - 4×ℓ×k - φ - k - 1**
 
-Therefore **weight(P) < weight(Xⁱ_Finality)**.
+Therefore **score(P) < score(Xⁱ_Finality)**.
 
 ***
 
