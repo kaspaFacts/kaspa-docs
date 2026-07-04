@@ -69,7 +69,7 @@ When contributing, apply these conversions consistently:
 | Halving every 4 years | **Halving every year** (smooth monthly steps) |
 | blockchain | **blockDAG** |
 | SPV clients | Not applicable (all nodes pruned by default) |
-| satoshis | **sompi** (1 kaspa = 100,000,000 sompi) |
+| satoshis | **sompi** (1 kaspa = 1,000,000,000 sompi) |
 
 ### Key Kaspa Concepts to Emphasize
 
@@ -108,10 +108,24 @@ When contributing, apply these conversions consistently:
 
 ## Chapter Status
 
-| Chapter | Status |
-|---------|--------|
-| ch01_intro.md | ✅ Complete (Alpha) |
-| Remaining chapters | 🚧 In Progress |
+### Published Chapters (Ready for Review)
+
+| Chapter | File | Lines | Status | Description |
+|---------|------|-------|--------|-------------|
+| 1 | ch01_intro.md | ~270 | ✅ PUBLISHED | Introduction to Kaspa, wallets, getting started |
+| 2 | ch02_overview.md | ~188 | ✅ PUBLISHED | How Kaspa works, transactions, mining overview |
+| 3 | ch03_kaspa-node.md | ~756 | ✅ PUBLISHED | Running a Kaspa node, configuration, RPC API |
+| 4 | ch04_keys.md | ~504 | ✅ PUBLISHED | Keys, addresses, cryptography, HD wallets |
+
+### In Progress / Not Started
+
+| Chapter | Status | Notes |
+|---------|--------|------|
+| ch05+ | 🚧 Pending | |
+
+---
+
+**Progress**: 4 chapters published (~1,718 lines total). Ready for community review and feedback!
 
 ---
 
