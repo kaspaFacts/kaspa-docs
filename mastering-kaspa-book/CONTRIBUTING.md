@@ -69,7 +69,7 @@ When contributing, apply these conversions consistently:
 | Halving every 4 years | **Halving every year** (smooth monthly steps) |
 | blockchain | **blockDAG** |
 | SPV clients | Not applicable (all nodes pruned by default) |
-| satoshis | **sompi** (1 kaspa = 1,000,000,000 sompi) |
+| satoshis | **sompi** (1 kaspa = 100,000,000 sompi) |
 
 ### Key Kaspa Concepts to Emphasize
 
